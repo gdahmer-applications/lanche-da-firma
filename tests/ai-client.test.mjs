@@ -58,6 +58,24 @@ test("executa a função do Apps Script com OAuth e devolve o resultado", async 
   assert.equal(result.answer, "Resposta");
 });
 
+test("mantém o contexto global ao chamar um fetch sensível a this", async () => {
+  const sensitiveFetch = async function () {
+    assert.equal(this, globalThis);
+    return {
+      ok: true,
+      status: 200,
+      json: async () => ({ response: { result: { ok: true, source: "gemini", phrase: "Frase" } } })
+    };
+  };
+  const client = new AppsScriptAiClient({
+    accessToken: "token-de-teste",
+    deploymentId: DEPLOYMENT_ID,
+    fetchImpl: sensitiveFetch
+  });
+  const result = await client.getDailyWisdom({});
+  assert.equal(result.phrase, "Frase");
+});
+
 test("traduz falha de permissão do backend", async () => {
   const client = new AppsScriptAiClient({
     accessToken: "token-de-teste",
