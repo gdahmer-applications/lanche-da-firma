@@ -117,7 +117,7 @@
         <div class="hero-cards" id="heroCards"></div>
         <div class="two-columns">
           <article class="panel"><div class="panel-title"><div><p class="eyebrow">PRÓXIMOS</p><h2>Agendamentos em aberto</h2></div></div><div class="schedule" id="schedule"></div></article>
-          <article class="panel phrase-panel"><p class="eyebrow">SABEDORIA DUVIDOSA DO DIA</p><blockquote id="mainPhrase">Carregando uma frase de gosto questionável…</blockquote><p class="phrase-schedule">Nova frase diariamente às 07h.</p><div class="badges" id="badges"></div></article>
+          <article class="panel phrase-panel"><p class="eyebrow">SABEDORIA DUVIDOSA DO DIA</p><blockquote id="mainPhrase">Carregando uma frase de gosto questionável…</blockquote><p class="phrase-schedule">Nova frase diariamente a partir das 07h · <span id="phraseSource">frase local de segurança</span>.</p><div class="badges" id="badges"></div></article>
         </div>
         <article class="panel movements"><div class="panel-title"><div><p class="eyebrow">HISTÓRICO</p><h2>Últimos movimentos</h2></div></div><div class="activity" id="recentActivity"></div></article>
       </section>
@@ -174,9 +174,9 @@
       </section>
 
       <section class="page" id="ia" aria-labelledby="iaTitle">
-        <div class="section-heading compact"><div><p class="eyebrow">CONSULTA SOBRE O RODÍZIO</p><h2 id="iaTitle">Conselheiro do Lanche</h2><p>Respostas locais usando somente a base carregada.</p></div><span class="local-pill">MODO LOCAL</span></div>
+        <div class="section-heading compact"><div><p class="eyebrow">CONSULTA SOBRE O RODÍZIO</p><h2 id="iaTitle">Conselheiro do Lanche</h2><p id="aiSubtitle">Aguardando o Deployment ID do backend Gemini.</p></div><span class="local-pill off" id="aiState">MODO LOCAL</span></div>
         <div class="advisor-layout">
-          <aside class="panel quick-panel"><h3>Perguntas rápidas</h3><div class="quick"><button data-question="Quem deve trazer bebida agora?" type="button">Quem traz bebida?</button><button data-question="Quem deve trazer lanche agora?" type="button">Quem traz lanche?</button><button data-question="Quem está com a próxima CUCA?" type="button">Próxima CUCA</button><button data-question="Quais são os agendamentos?" type="button">Ver agendamentos</button></div><div class="info-note">A versão GitHub Pages não envia chaves de IA ao navegador. Assim, nenhuma credencial fica exposta.</div></aside>
+          <aside class="panel quick-panel"><h3>Perguntas rápidas</h3><div class="quick"><button data-question="Quem deve trazer bebida agora?" type="button">Quem traz bebida?</button><button data-question="Quem deve trazer lanche agora?" type="button">Quem traz lanche?</button><button data-question="Quem está com a próxima CUCA?" type="button">Próxima CUCA</button><button data-question="Quais são os agendamentos?" type="button">Ver agendamentos</button></div><div class="info-note">Ao usar o Gemini, todos os dados atuais do rodízio podem ser enviados para gerar a resposta. A chave permanece somente no Apps Script.</div></aside>
           <div class="panel chat-panel"><div class="messages" id="messages" aria-live="polite"><div class="message bot">Pergunte sobre ranking, agenda ou a situação de uma pessoa.</div></div><form class="chat-input" id="chatForm"><label class="sr-only" for="question">Pergunta</label><input id="question" autocomplete="off" maxlength="500" placeholder="Ex.: quem está devendo bebida?"><button class="primary-button" id="chatButton" type="submit">Enviar</button></form></div>
         </div>
       </section>
@@ -196,6 +196,7 @@
   <div class="loading hidden" id="loading" role="status" aria-live="polite"><div><span class="spinner" aria-hidden="true"></span><p id="loadingText">Sincronizando…</p></div></div>
 
   <script src="./config.js"></script>
+  <script src="./ai-config.js"></script>
   <script type="module" src="./app.js"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </body>

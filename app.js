@@ -3,6 +3,7 @@ import {
   buildDashboard,
   cleanText,
   dailyHomeMessage,
+  dailyPhrasePeriod,
   isoToBr,
   nextFridayIso,
   normalizeName,
@@ -11,14 +12,23 @@ import {
   validateContribution,
   validateParticipant
 } from "./logic.js";
+import {
+  AI_EXECUTION_SCOPES,
+  AppsScriptAiClient,
+  buildAiContext,
+  isAiDeploymentConfigured
+} from "./ai-client.js";
 import { DemoStore, GoogleSheetsStore, SheetsApiError } from "./sheets-api.js";
 
 const config = window.LANCHES_CONFIG || {};
+const aiConfig = window.LANCHES_AI_CONFIG || {};
+const aiConfigured = isAiDeploymentConfigured(aiConfig.appsScriptDeploymentId);
 const SCOPES = Object.freeze([
   "openid",
   "email",
   "profile",
-  "https://www.googleapis.com/auth/spreadsheets"
+  "https://www.googleapis.com/auth/spreadsheets",
+  ...(aiConfigured ? AI_EXECUTION_SCOPES : [])
 ]);
 const PAGE_TITLES = Object.freeze({
   base: "Base",
@@ -34,6 +44,14 @@ const state = {
   accessToken: "",
   user: null,
   store: null,
+  aiClient: null,
+  aiBusy: false,
+  aiConnected: false,
+  aiLastError: "",
+  chatHistory: [],
+  dailyWisdom: null,
+  dailyWisdomBusy: false,
+  dailyWisdomRetryAt: 0,
   raw: null,
   data: null,
   currentRank: "BEBIDA",
@@ -53,7 +71,10 @@ async function init() {
   resetParticipantForm();
   setDefaultDates();
   window.setInterval(() => {
-    if (state.data) renderDailyPhrase();
+    if (state.data) {
+      renderDailyPhrase();
+      void refreshDailyWisdom();
+    }
   }, 60000);
 
   const wantsDemo = Boolean(config.allowDemo) && new URLSearchParams(location.search).get("demo") === "1";
@@ -195,6 +216,9 @@ async function handleTokenResponse(response) {
     state.accessToken = response.access_token;
     state.user = profile;
     state.store = new GoogleSheetsStore({ accessToken: state.accessToken, spreadsheetId: config.spreadsheetId });
+    state.aiClient = aiConfigured
+      ? new AppsScriptAiClient({ accessToken: state.accessToken, deploymentId: aiConfig.appsScriptDeploymentId })
+      : null;
     await enterApplication();
   } catch (error) {
     state.accessToken = "";
@@ -253,6 +277,14 @@ function logout() {
   state.accessToken = "";
   state.user = null;
   state.store = null;
+  state.aiClient = null;
+  state.aiBusy = false;
+  state.aiConnected = false;
+  state.aiLastError = "";
+  state.chatHistory = [];
+  state.dailyWisdom = null;
+  state.dailyWisdomBusy = false;
+  state.dailyWisdomRetryAt = 0;
   state.raw = null;
   state.data = null;
   state.demo = false;
@@ -284,6 +316,7 @@ async function loadDataAndRender() {
   state.raw = await state.store.load();
   state.data = buildDashboard(state.raw, { timezone: config.timezone || "America/Sao_Paulo" });
   renderAll();
+  void refreshDailyWisdom();
 }
 
 function renderAll() {
@@ -297,14 +330,80 @@ function renderAll() {
   renderEligible();
   renderPeople();
   renderDailyPhrase();
+  renderAiState();
   qs("#syncTime").textContent = `Atualizado ${state.data.generatedAt}`;
   qs("#navBaseCount").textContent = `${state.data.baseStats.total} registros`;
 }
 
 function renderDailyPhrase() {
-  const message = dailyHomeMessage(new Date(), config.timezone || "America/Sao_Paulo", 7);
+  const now = new Date();
+  const timezone = config.timezone || "America/Sao_Paulo";
+  const period = dailyPhrasePeriod(now, timezone, 7);
+  const fromGemini = state.dailyWisdom?.period === period && cleanText(state.dailyWisdom.phrase);
+  const message = fromGemini ? state.dailyWisdom.phrase : dailyHomeMessage(now, timezone, 7);
   state.data.mainMessage = message;
   qs("#mainPhrase").textContent = `“${message}”`;
+  qs("#phraseSource").textContent = fromGemini ? "gerada pelo Gemini" : "frase local de segurança";
+}
+
+async function refreshDailyWisdom() {
+  if (!state.aiClient || !state.data || state.dailyWisdomBusy) return;
+  if (Date.now() < state.dailyWisdomRetryAt) return;
+  const now = new Date();
+  const timezone = config.timezone || "America/Sao_Paulo";
+  const period = dailyPhrasePeriod(now, timezone, 7);
+  if (state.dailyWisdom?.period === period && state.dailyWisdom?.source === "gemini") return;
+  state.dailyWisdomBusy = true;
+  try {
+    const response = await state.aiClient.getDailyWisdom({
+      fallback: dailyHomeMessage(now, timezone, 7),
+      summary: {
+        referenceDate: state.data.referenceIso,
+        participants: state.data.participants.length,
+        statistics: state.data.baseStats,
+        schedules: state.data.schedules
+      }
+    });
+    if (!response?.ok || response.source !== "gemini" || !cleanText(response.phrase)) {
+      throw new Error(response?.error || "A frase diária não foi gerada pelo Gemini.");
+    }
+    state.dailyWisdom = {
+      phrase: cleanText(response.phrase),
+      period: cleanText(response.period) || period,
+      source: "gemini"
+    };
+    state.aiConnected = true;
+    state.aiLastError = "";
+    state.dailyWisdomRetryAt = 0;
+  } catch (error) {
+    state.aiLastError = error.message;
+    state.dailyWisdomRetryAt = Date.now() + 15 * 60 * 1000;
+  } finally {
+    state.dailyWisdomBusy = false;
+    renderDailyPhrase();
+    renderAiState();
+    renderBadges();
+  }
+}
+
+function renderAiState() {
+  const pill = qs("#aiState");
+  pill.classList.toggle("off", !state.aiClient);
+  pill.classList.toggle("pending", Boolean(state.aiClient) && !state.aiConnected);
+  if (state.aiConnected) {
+    pill.textContent = "GEMINI ATIVO";
+    qs("#aiSubtitle").textContent = "Respostas geradas com todos os dados atuais do rodízio.";
+    return;
+  }
+  if (state.aiClient) {
+    pill.textContent = "GEMINI CONFIGURADO";
+    qs("#aiSubtitle").textContent = state.aiLastError
+      ? "Gemini indisponível agora; o modo local permanece ativo."
+      : "Conexão segura pronta para consultar o Gemini.";
+    return;
+  }
+  pill.textContent = "MODO LOCAL";
+  qs("#aiSubtitle").textContent = "Aguardando o Deployment ID do backend Gemini.";
 }
 
 function showPage(pageId) {
@@ -360,7 +459,7 @@ function renderBadges() {
   qs("#badges").innerHTML = [
     `${state.data.participants.length} participantes`,
     "3 categorias",
-    "Dados protegidos pelo Google",
+    state.aiConnected ? "Gemini ativo" : "Conselheiro local",
     `Atualizado ${state.data.generatedAt}`
   ].map((label) => `<span class="badge">${escapeHtml(label)}</span>`).join("");
 }
@@ -642,11 +741,53 @@ function setDefaultDates() {
   qs("#dateInput").value = todayIso(config.timezone || "America/Sao_Paulo");
 }
 
-function askAdvisor(question) {
-  if (!state.data) return;
+async function askAdvisor(question) {
+  if (!state.data || state.aiBusy) return;
+  const previousHistory = state.chatHistory.slice(-8);
   addMessage("user", question);
-  const answer = askLocal(question, state.data);
-  window.setTimeout(() => addMessage("bot", answer, "Base + ranking · processamento local"), 120);
+  state.chatHistory.push({ role: "user", text: question });
+
+  if (!state.aiClient) {
+    const answer = askLocal(question, state.data);
+    window.setTimeout(() => addMessage("bot", answer, "Base + ranking · modo local"), 120);
+    return;
+  }
+
+  state.aiBusy = true;
+  qs("#chatButton").disabled = true;
+  const thinking = addMessage("bot", "Consultando a base completa…", "Gemini · aguarde");
+  thinking.classList.add("thinking");
+  try {
+    const response = await state.aiClient.askAdvisor({
+      question,
+      history: previousHistory,
+      context: buildAiContext(state.data)
+    });
+    const geminiAnswer = String(response?.answer || "").trim();
+    if (!response?.ok || response.source !== "gemini" || !geminiAnswer) {
+      throw new Error(response?.error || "O Conselheiro não recebeu uma resposta do Gemini.");
+    }
+    thinking.remove();
+    const answer = geminiAnswer;
+    addMessage("bot", answer, `${response.model || "Gemini"} · base completa`);
+    state.chatHistory.push({ role: "assistant", text: answer });
+    state.chatHistory = state.chatHistory.slice(-12);
+    state.aiConnected = true;
+    state.aiLastError = "";
+  } catch (error) {
+    thinking.remove();
+    const answer = askLocal(question, state.data);
+    addMessage("bot", answer, "Modo local · Gemini indisponível");
+    state.chatHistory.push({ role: "assistant", text: answer });
+    state.chatHistory = state.chatHistory.slice(-12);
+    state.aiLastError = error.message;
+    toast(`Gemini indisponível: ${error.message}`, true);
+  } finally {
+    state.aiBusy = false;
+    qs("#chatButton").disabled = false;
+    renderAiState();
+    renderBadges();
+  }
 }
 
 function addMessage(type, content, meta = "") {
@@ -660,6 +801,7 @@ function addMessage(type, content, meta = "") {
   }
   qs("#messages").appendChild(message);
   qs("#messages").scrollTop = qs("#messages").scrollHeight;
+  return message;
 }
 
 async function runMutation(label, operation) {

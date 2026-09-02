@@ -9,7 +9,9 @@ Versão estática do rodízio de CUCA, bebidas e lanches, preparada para GitHub 
 - O acesso usa Google OAuth e aceita somente contas do domínio configurado (`madesa.com`).
 - A planilha Google continua sendo a fonte única dos dados; nenhum histórico é incluído no repositório.
 - Inclusão e edição de pessoas, inclusão e remoção de registros e cálculo do ranking funcionam no navegador.
-- O Conselheiro opera localmente com os dados já carregados. Nenhuma chave Gemini fica exposta.
+- O Conselheiro pode usar o Gemini com todos os dados atuais do rodízio e mantém o modo local como contingência.
+- A frase diária pode ser gerada pelo Gemini uma vez ao dia, a partir das 07h, com cache no backend.
+- Nenhuma chave Gemini fica exposta no navegador ou no repositório.
 
 ## Arquitetura segura para uma página estática
 
@@ -17,7 +19,8 @@ O GitHub Pages não executa o `Code.gs`. Esta versão usa:
 
 1. Google Identity Services para o login e a autorização.
 2. Google Sheets API para ler e editar a planilha em nome do usuário conectado.
-3. Três barreiras para a base: OAuth com audiência **Interna**, conferência do domínio `hd=madesa.com` e permissões da própria planilha.
+3. Google Apps Script API Executable como backend autenticado para o Gemini.
+4. Três barreiras para a base: OAuth com audiência **Interna**, conferência do domínio `hd=madesa.com` e permissões da própria planilha.
 
 O token de acesso fica somente na memória da aba do navegador e não é gravado em `localStorage`, cookies ou arquivos.
 
@@ -70,9 +73,31 @@ window.LANCHES_CONFIG = Object.freeze({
 });
 ```
 
-O Client ID e o ID da planilha identificam os recursos; eles não substituem as permissões do Google e não são segredos. Nunca adicione **Client Secret**, chave Gemini ou token de acesso ao repositório.
+O Client ID e o ID da planilha identificam recursos; eles não substituem as permissões do Google e não são segredos. Nunca adicione **Client Secret**, chave Gemini ou token de acesso ao repositório.
 
-## 4. Publicar no GitHub Pages
+## 4. Conectar o Gemini
+
+O código pronto está em [`apps-script/`](apps-script/README.md). A configuração é feita uma única vez:
+
+1. Crie o projeto Apps Script no mesmo Google Cloud Project do Client ID atual.
+2. Habilite **Google Apps Script API** e **Generative Language API**.
+3. Salve `GEMINI_API_KEY` somente nas **Script Properties**.
+4. Publique como **API Executable**, restrito à organização Madesa.
+5. Copie o Deployment ID para `appsScriptDeploymentId` em `ai-config.js`.
+
+```js
+window.LANCHES_AI_CONFIG = Object.freeze({
+  appsScriptDeploymentId: "AKfycbxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+});
+```
+
+O Deployment ID identifica a API autenticada e pode ficar no repositório; ele não concede acesso sem OAuth.
+
+Enquanto esse ID estiver vazio ou o backend estiver indisponível, a aplicação continua operando em modo local. Ao ativar o Gemini, todos os dados atuais do rodízio podem ser enviados para responder ao usuário, conforme informado na interface.
+
+> Para dados corporativos, avalie usar um projeto Gemini com faturamento habilitado. A documentação atual informa que dados do nível gratuito podem ser usados para melhorar produtos do Google, enquanto no nível pago não: https://ai.google.dev/gemini-api/docs/pricing
+
+## 5. Publicar no GitHub Pages
 
 1. Crie um repositório exclusivo para o site e envie o conteúdo desta pasta para a branch `main`.
 2. Abra **Settings → Pages**.
@@ -101,10 +126,15 @@ Abra `http://localhost:8000`. Para testar com dados fictícios, altere temporari
 - **Erro 403 na planilha**: habilite a Google Sheets API e conceda permissão de Editor ao usuário.
 - **Planilha não encontrada**: revise o ID em `config.js` e o compartilhamento.
 - **Sessão expirada**: clique em Sair e entre novamente; os tokens do fluxo web têm duração curta.
+- **Gemini 403**: confirme que Apps Script, OAuth Client ID e APIs estão no mesmo Google Cloud Project.
+- **Gemini não configurado**: confira `GEMINI_API_KEY` nas Script Properties e o Deployment ID em `config.js`.
 
 ## Referências oficiais
 
 - Google Identity Services — token model: https://developers.google.com/identity/oauth2/web/guides/use-token-model
 - Google Sheets API para JavaScript: https://developers.google.com/workspace/sheets/api/quickstart/js
+- Apps Script API `scripts.run`: https://developers.google.com/apps-script/api/how-tos/execute
+- Gemini 3.5 Flash-Lite: https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash-lite
+- Segurança de chaves Gemini: https://ai.google.dev/gemini-api/docs/api-key
 - Restrições por domínio Google Workspace (`hd`): https://developers.google.com/identity/openid-connect/reference
 - GitHub Pages com Actions: https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages
