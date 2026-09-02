@@ -46,3 +46,48 @@ jobs:
       - name: Publicar
         id: deployment
         uses: actions/deploy-pages@v4
+
+  smoke:
+    name: Validar site publicado
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Testar GitHub Pages e integração pública da IA
+        env:
+          SITE_URL: https://gdahmer-applications.github.io/lanche-da-firma
+        run: |
+          set -euo pipefail
+
+          ok=0
+          for attempt in {1..12}; do
+            if curl -fsSL --max-time 20 "$SITE_URL/" -o /tmp/index.html; then
+              ok=1
+              break
+            fi
+            sleep 5
+          done
+          test "$ok" -eq 1
+
+          curl -fsSL --max-time 20 "$SITE_URL/config.js" -o /tmp/config.js
+          curl -fsSL --max-time 20 "$SITE_URL/ai-config.js" -o /tmp/ai-config.js
+          curl -fsSL --max-time 20 "$SITE_URL/app.js" -o /tmp/app.js
+          curl -fsSL --max-time 20 "$SITE_URL/ai-client.js" -o /tmp/ai-client.js
+          curl -fsSL --max-time 20 "$SITE_URL/logic.js" -o /tmp/logic.js
+          curl -fsSL --max-time 20 "$SITE_URL/sheets-api.js" -o /tmp/sheets-api.js
+
+          grep -Fq '<title>Lanche da Firma</title>' /tmp/index.html
+          grep -Fq 'https://accounts.google.com/gsi/client' /tmp/index.html
+          grep -Eq 'appsScriptDeploymentId: "[A-Za-z0-9_-]{20,}"' /tmp/ai-config.js
+          grep -Fq 'allowedDomain: "madesa.com"' /tmp/config.js
+          grep -Fq 'allowDemo: false' /tmp/config.js
+          grep -Fq 'https://script.googleapis.com/v1/scripts' /tmp/ai-client.js
+
+          node --check /tmp/config.js
+          node --check /tmp/ai-config.js
+          node --check /tmp/app.js
+          node --check /tmp/ai-client.js
+          node --check /tmp/logic.js
+          node --check /tmp/sheets-api.js
+
+          curl -fsSI --max-time 20 https://accounts.google.com/gsi/client >/dev/null
+          echo "Smoke test concluído: GitHub Pages e arquivos públicos da IA estão acessíveis."
