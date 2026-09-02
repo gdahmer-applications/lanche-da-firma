@@ -6,7 +6,7 @@
   <meta name="description" content="Rodízio interno de cucas, bebidas e lanches da equipe.">
   <meta name="robots" content="noindex, nofollow, noarchive">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://accounts.google.com; style-src 'self'; img-src 'self' data: https://lh3.googleusercontent.com https://*.googleusercontent.com; connect-src 'self' https://accounts.google.com https://sheets.googleapis.com https://openidconnect.googleapis.com https://oauth2.googleapis.com; frame-src https://accounts.google.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://accounts.google.com; style-src 'self'; img-src 'self' data: https://lh3.googleusercontent.com https://*.googleusercontent.com; connect-src 'self' https://accounts.google.com https://sheets.googleapis.com https://script.googleapis.com https://openidconnect.googleapis.com https://oauth2.googleapis.com; frame-src https://accounts.google.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
   <title>Lanche da Firma</title>
   <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./styles.css">
@@ -78,126 +78,181 @@
       <header class="topbar">
         <button class="menu-button" id="menuButton" type="button" aria-label="Abrir menu" aria-expanded="false">☰</button>
         <div>
-          <p class="top-kicker">ESTABELECIMENTO DE ALTA GASTRONOMIA CORPORATIVA</p>
-          <h1 id="pageTitle">Início</h1>
+          <p class="eyebrow" id="pageEyebrow">PAINEL DO RODÍZIO</p>
+          <h2 id="pageTitle">Início</h2>
         </div>
-        <div class="top-actions">
-          <span class="sync-time" id="syncTime">Aguardando sincronização</span>
-          <button class="ghost-button" id="refreshButton" type="button">↻ Atualizar</button>
+        <div class="topbar-actions">
+          <span class="sync-time" id="syncTime">—</span>
+          <button class="icon-button" id="refreshButton" type="button" aria-label="Atualizar dados" title="Atualizar">↻</button>
         </div>
       </header>
 
-      <div class="demo-banner hidden" id="demoBanner">MODO DE DEMONSTRAÇÃO — alterações não são gravadas.</div>
+      <div class="demo-banner hidden" id="demoBanner">Modo demonstração — os dados abaixo não alteram nenhuma planilha.</div>
 
-      <section class="page" id="base" aria-labelledby="baseTitle">
-        <div class="section-heading">
-          <div><p class="eyebrow">VISÃO CONSOLIDADA</p><h2 id="baseTitle">Base de lançamentos</h2><p>CUCA, bebida e lanche em uma única lista.</p></div>
+      <section class="page hidden" id="page-base" aria-labelledby="baseTitle">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">HISTÓRICO CONSOLIDADO</p>
+            <h3 id="baseTitle">Base</h3>
+            <p>Todos os registros de cuca, bebida e lanche usados no cálculo do rodízio.</p>
+          </div>
           <button class="primary-button" id="baseAddButton" type="button">＋ Novo registro</button>
         </div>
-        <div class="metric-row" id="baseKpis"></div>
-        <div class="panel base-panel">
-          <div class="base-toolbar">
-            <label class="search-field"><span class="sr-only">Buscar na base</span><input id="baseSearch" type="search" placeholder="Buscar pessoa, item ou data…" autocomplete="off"></label>
-            <label><span class="sr-only">Categoria</span><select id="baseCategory"><option value="">Todas as categorias</option><option value="CUCA">CUCA</option><option value="BEBIDA">Bebida</option><option value="LANCHE">Lanche</option></select></label>
-            <label><span class="sr-only">Status</span><select id="baseStatus"><option value="">Todos os status</option><option value="REALIZADO">Realizado</option><option value="PROGRAMADO">Programado</option></select></label>
-            <button class="ghost-button" id="baseClear" type="button">Limpar</button>
-          </div>
-          <div class="table-meta"><span id="baseCount">0 registros</span></div>
-          <div class="table-wrap">
-            <table class="data-table">
-              <thead><tr><th>Data</th><th>Tipo</th><th>Responsável</th><th>Item / observação</th><th>Status</th><th>Crédito</th><th>Ações</th></tr></thead>
-              <tbody id="baseRows"></tbody>
-            </table>
-          </div>
+        <div class="filters-row">
+          <label>Buscar<input id="baseSearch" type="search" placeholder="Pessoa, item, data…"></label>
+          <label>Categoria<select id="baseCategory"><option value="">Todas</option><option value="CUCA">Cuca</option><option value="BEBIDA">Bebida</option><option value="LANCHE">Lanche</option></select></label>
+          <label>Status<select id="baseStatus"><option value="">Todos</option><option value="REALIZADO">Realizado</option><option value="PROGRAMADO">Programado</option></select></label>
+          <button class="ghost-button filter-clear" id="baseClear" type="button">Limpar</button>
+        </div>
+        <div class="table-shell base-table-shell">
+          <table>
+            <thead><tr><th>Data</th><th>Categoria</th><th>Responsável</th><th>Item / observação</th><th>Status</th><th>Conta?</th><th>Elegíveis</th><th>Crédito</th><th>Validação</th><th></th></tr></thead>
+            <tbody id="baseBody"></tbody>
+          </table>
         </div>
       </section>
 
-      <section class="page active" id="inicio" aria-labelledby="inicioTitle">
-        <div class="section-heading compact"><div><p class="eyebrow">VISÃO DO DIA</p><h2 id="inicioTitle">Quem está na vez?</h2></div></div>
-        <div class="hero-cards" id="heroCards"></div>
-        <div class="two-columns">
-          <article class="panel"><div class="panel-title"><div><p class="eyebrow">PRÓXIMOS</p><h2>Agendamentos em aberto</h2></div></div><div class="schedule" id="schedule"></div></article>
-          <article class="panel phrase-panel"><p class="eyebrow">SABEDORIA DUVIDOSA DO DIA</p><blockquote id="mainPhrase">Carregando uma frase de gosto questionável…</blockquote><p class="phrase-schedule">Nova frase diariamente a partir das 07h · <span id="phraseSource">frase local de segurança</span>.</p><div class="badges" id="badges"></div></article>
+      <section class="page active" id="page-inicio" aria-labelledby="homeTitle">
+        <div class="hero-card">
+          <p class="eyebrow">BOM DIA, EQUIPE</p>
+          <h3 id="homeTitle">O que está rolando?</h3>
+          <blockquote id="mainPhrase">“Carregando o conselho do dia…”</blockquote>
+          <span class="phrase-source" id="phraseSource">frase local de segurança</span>
         </div>
-        <article class="panel movements"><div class="panel-title"><div><p class="eyebrow">HISTÓRICO</p><h2>Últimos movimentos</h2></div></div><div class="activity" id="recentActivity"></div></article>
+
+        <div class="metrics-grid" id="metricsGrid"></div>
+
+        <div class="home-grid">
+          <section class="card">
+            <div class="card-head"><div><p class="eyebrow">PRÓXIMOS</p><h3>Agenda</h3></div></div>
+            <div class="schedule-list" id="scheduleList"></div>
+          </section>
+          <section class="card">
+            <div class="card-head"><div><p class="eyebrow">ÚLTIMOS</p><h3>Contribuições recentes</h3></div></div>
+            <div class="recent-list" id="recentList"></div>
+          </section>
+        </div>
       </section>
 
-      <section class="page" id="rodizio" aria-labelledby="rodizioTitle">
-        <div class="section-heading compact"><div><p class="eyebrow">PRIORIDADE ATUAL</p><h2 id="rodizioTitle">Placar da rodada</h2><p>Maior saldo e maior tempo sem contribuir aparecem primeiro.</p></div></div>
-        <div class="panel">
-          <div class="tabs" role="tablist" aria-label="Categoria do ranking">
-            <button class="tab active" data-rank="BEBIDA" role="tab" aria-selected="true" type="button">Bebidas</button>
-            <button class="tab" data-rank="LANCHE" role="tab" aria-selected="false" type="button">Lanches</button>
-            <button class="tab" data-rank="CUCA" role="tab" aria-selected="false" type="button">CUCA</button>
-          </div>
-          <div class="ranking" id="rankingList"></div>
-          <div class="info-note">Programado não reduz saldo. Somente registros realizados contam no rodízio.</div>
+      <section class="page hidden" id="page-rodizio" aria-labelledby="rotationTitle">
+        <div class="section-head">
+          <div><p class="eyebrow">PRIORIDADE</p><h3 id="rotationTitle">Rodízio</h3><p>Quanto maior o saldo, maior a prioridade para a próxima contribuição.</p></div>
+          <div class="legend"><span><i class="dot late"></i>Atrasado</span><span><i class="dot turn"></i>Na vez</span><span><i class="dot ok"></i>Equilibrado</span><span><i class="dot ahead"></i>Adiantado</span></div>
+        </div>
+        <div class="tabs" role="tablist" aria-label="Categorias do rodízio">
+          <button class="tab active" data-rank="BEBIDA" role="tab" aria-selected="true" type="button">Bebida</button>
+          <button class="tab" data-rank="CUCA" role="tab" aria-selected="false" type="button">Cuca</button>
+          <button class="tab" data-rank="LANCHE" role="tab" aria-selected="false" type="button">Lanche</button>
+        </div>
+        <div class="table-shell">
+          <table>
+            <thead><tr><th>#</th><th>Pessoa</th><th>Realizado</th><th>Esperado</th><th>Saldo</th><th>Última vez</th><th>Dias sem trazer</th><th>Situação</th></tr></thead>
+            <tbody id="rankingBody"></tbody>
+          </table>
         </div>
       </section>
 
-      <section class="page" id="registrar" aria-labelledby="registrarTitle">
-        <div class="section-heading compact"><div><p class="eyebrow">NOVA MOVIMENTAÇÃO</p><h2 id="registrarTitle">Abrir comanda</h2></div></div>
+      <section class="page hidden" id="page-registrar" aria-labelledby="registerTitle">
         <div class="form-layout">
-          <form class="panel form-panel" id="registerForm">
-            <label>Quem assume a conta?<select name="pessoa" id="personSelect" required></select></label>
-            <div class="field-grid">
-              <label>O quê?<select name="categoria" id="categorySelect"><option value="BEBIDA">Bebida</option><option value="LANCHE">Lanche / amendoim</option><option value="CUCA">CUCA</option></select></label>
-              <label>Quando?<input type="date" name="data" id="dateInput" required></label>
-            </div>
-            <label>Pedido, sabor ou observação<input name="item" id="itemInput" placeholder="Ex.: 2 Coca Zero + gelo" maxlength="250"></label>
-            <fieldset class="radio-grid"><legend>Como registrar?</legend><label><input type="radio" name="acao" value="agendado" checked><span>📌 Programado</span></label><label><input type="radio" name="acao" value="realizado"><span>✓ Realizado</span></label></fieldset>
-            <button class="primary-button full" id="registerButton" type="submit">Salvar registro</button>
-            <div class="form-status" id="formStatus" role="status" aria-live="polite"></div>
-          </form>
-          <aside class="panel side-info"><p class="eyebrow">REGRAS RÁPIDAS</p><h2>Como funciona</h2><ul><li>CUCA deve ser agendada para uma sexta-feira.</li><li>Programado só entra no saldo quando for marcado como realizado.</li><li>O cálculo respeita a data de entrada de cada participante.</li></ul><h3>Participantes elegíveis</h3><div class="badges" id="eligibleBadges"></div></aside>
+          <section class="card form-card">
+            <div class="card-head"><div><p class="eyebrow">NOVO REGISTRO</p><h3 id="registerTitle">Registrar contribuição</h3></div></div>
+            <form id="registerForm">
+              <div class="form-grid two">
+                <label>Categoria<select id="categorySelect" required><option value="CUCA">Cuca</option><option value="BEBIDA">Bebida</option><option value="LANCHE">Lanche</option></select></label>
+                <label>Data<input id="dateInput" type="date" required></label>
+              </div>
+              <label>Responsável<select id="personSelect" required></select></label>
+              <label>Item / observação<input id="itemInput" type="text" maxlength="120" placeholder="Ex.: cuca de chocolate"></label>
+              <label>Status<select id="statusSelect"><option value="REALIZADO">Realizado</option><option value="PROGRAMADO">Programado</option></select></label>
+              <div class="eligibility-note" id="eligibilityNote"></div>
+              <button class="primary-button" id="saveRegister" type="submit">Salvar registro</button>
+            </form>
+          </section>
+          <aside class="card helper-card">
+            <p class="eyebrow">COMO FUNCIONA</p>
+            <h3>Regras rápidas</h3>
+            <ul>
+              <li>Cuca acontece às sextas-feiras.</li>
+              <li>Bebida e lanche podem ser registrados em qualquer data.</li>
+              <li>Programado não reduz o saldo.</li>
+              <li>Um realizado por pessoa, categoria e dia conta no máximo uma vez.</li>
+            </ul>
+          </aside>
         </div>
       </section>
 
-      <section class="page" id="pessoas" aria-labelledby="pessoasTitle">
-        <div class="section-heading"><div><p class="eyebrow">CONFIGURAÇÃO DO RODÍZIO</p><h2 id="pessoasTitle">Pessoas</h2><p>Defina desde quando cada pessoa participa de cada categoria.</p></div><button class="ghost-button" id="newParticipantButton" type="button">＋ Nova pessoa</button></div>
+      <section class="page hidden" id="page-pessoas" aria-labelledby="peopleTitle">
         <div class="people-layout">
-          <form class="panel form-panel" id="participantForm">
-            <input type="hidden" id="participantOriginalName">
-            <label>Nome<input id="participantName" required maxlength="100" placeholder="Ex.: Maria"></label>
-            <label>Início geral<input type="date" id="participantGeneralStart" required></label>
-            <div class="participation-grid">
-              <div class="participation-card"><label class="check-line"><input type="checkbox" id="participantCuca" checked><span>🍰 CUCA</span></label><label>Início<input type="date" id="participantCucaStart"></label></div>
-              <div class="participation-card"><label class="check-line"><input type="checkbox" id="participantBeverage" checked><span>🥤 Bebida</span></label><label>Início<input type="date" id="participantBeverageStart"></label></div>
-              <div class="participation-card"><label class="check-line"><input type="checkbox" id="participantSnack" checked><span>🥨 Lanche</span></label><label>Início<input type="date" id="participantSnackStart"></label></div>
-            </div>
-            <label>Observações / regra especial<textarea id="participantNotes" maxlength="500" placeholder="Ex.: participa somente da CUCA"></textarea></label>
-            <button class="primary-button full" id="participantSaveButton" type="submit">Salvar pessoa</button>
-            <div class="form-status" id="participantStatus" role="status" aria-live="polite"></div>
-          </form>
-          <div class="panel"><div class="people-list" id="peopleList"></div></div>
+          <section class="card people-list-card">
+            <div class="card-head"><div><p class="eyebrow">EQUIPE</p><h3 id="peopleTitle">Pessoas</h3></div><button class="ghost-button" id="newParticipantButton" type="button">＋ Nova pessoa</button></div>
+            <div class="people-list" id="peopleList"></div>
+          </section>
+          <section class="card form-card">
+            <div class="card-head"><div><p class="eyebrow">CADASTRO</p><h3 id="participantFormTitle">Nova pessoa</h3></div></div>
+            <form id="participantForm">
+              <input id="participantOriginalName" type="hidden">
+              <label>Nome<input id="participantName" type="text" required maxlength="80"></label>
+              <label>Início geral<input id="participantStart" type="date" required></label>
+              <div class="participation-grid">
+                <label class="check-row"><input id="participantCuca" type="checkbox" checked> Participa de cuca</label>
+                <label>Início cuca<input id="participantCucaStart" type="date"></label>
+                <label class="check-row"><input id="participantBeverage" type="checkbox" checked> Participa de bebida</label>
+                <label>Início bebida<input id="participantBeverageStart" type="date"></label>
+                <label class="check-row"><input id="participantSnack" type="checkbox" checked> Participa de lanche</label>
+                <label>Início lanche<input id="participantSnackStart" type="date"></label>
+              </div>
+              <label>Observações<textarea id="participantNotes" rows="3" maxlength="300"></textarea></label>
+              <button class="primary-button" type="submit">Salvar pessoa</button>
+            </form>
+          </section>
         </div>
       </section>
 
-      <section class="page" id="ia" aria-labelledby="iaTitle">
-        <div class="section-heading compact"><div><p class="eyebrow">CONSULTA SOBRE O RODÍZIO</p><h2 id="iaTitle">Conselheiro do Lanche</h2><p id="aiSubtitle">Aguardando o Deployment ID do backend Gemini.</p></div><span class="local-pill off" id="aiState">MODO LOCAL</span></div>
-        <div class="advisor-layout">
-          <aside class="panel quick-panel"><h3>Perguntas rápidas</h3><div class="quick"><button data-question="Quem deve trazer bebida agora?" type="button">Quem traz bebida?</button><button data-question="Quem deve trazer lanche agora?" type="button">Quem traz lanche?</button><button data-question="Quem está com a próxima CUCA?" type="button">Próxima CUCA</button><button data-question="Quais são os agendamentos?" type="button">Ver agendamentos</button></div><div class="info-note">Ao usar o Gemini, todos os dados atuais do rodízio podem ser enviados para gerar a resposta. A chave permanece somente no Apps Script.</div></aside>
-          <div class="panel chat-panel"><div class="messages" id="messages" aria-live="polite"><div class="message bot">Pergunte sobre ranking, agenda ou a situação de uma pessoa.</div></div><form class="chat-input" id="chatForm"><label class="sr-only" for="question">Pergunta</label><input id="question" autocomplete="off" maxlength="500" placeholder="Ex.: quem está devendo bebida?"><button class="primary-button" id="chatButton" type="submit">Enviar</button></form></div>
+      <section class="page hidden" id="page-ia" aria-labelledby="aiTitle">
+        <div class="section-head">
+          <div><p class="eyebrow">CONSELHEIRO</p><h3 id="aiTitle">Pergunte ao rodízio</h3><p id="aiSubtitle">Conexão segura pronta para consultar o Gemini.</p></div>
+          <span class="ai-state pending" id="aiState">GEMINI CONFIGURADO</span>
         </div>
+        <div class="quick" aria-label="Perguntas rápidas">
+          <button type="button" data-question="Quem está com maior prioridade para trazer cuca?">Prioridade da cuca</button>
+          <button type="button" data-question="Quem está com maior prioridade para trazer bebida?">Prioridade da bebida</button>
+          <button type="button" data-question="Quem está com maior prioridade para trazer lanche?">Prioridade do lanche</button>
+          <button type="button" data-question="Resuma o estado atual do rodízio e destaque quem merece atenção.">Resumo geral</button>
+        </div>
+        <section class="chat-card">
+          <div class="chat-log" id="chatLog" aria-live="polite"></div>
+          <form class="chat-form" id="chatForm">
+            <label class="sr-only" for="question">Pergunta</label>
+            <input id="question" type="text" maxlength="500" autocomplete="off" placeholder="Pergunte sobre o rodízio…">
+            <button class="primary-button" id="chatButton" type="submit">Perguntar</button>
+          </form>
+        </section>
       </section>
     </main>
   </div>
 
-  <div class="modal-backdrop hidden" id="deleteModal" role="presentation">
-    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="deleteTitle" aria-describedby="deleteModalText">
-      <p class="eyebrow danger-text">AÇÃO PERMANENTE</p>
-      <h2 id="deleteTitle">Remover lançamento?</h2>
-      <p id="deleteModalText">Tem certeza?</p>
-      <div class="modal-actions"><button class="ghost-button" id="deleteCancel" type="button">Cancelar</button><button class="danger-button" id="deleteConfirm" type="button">Sim, remover</button></div>
-    </div>
+  <div class="loading-overlay hidden" id="loadingOverlay" aria-live="polite" aria-busy="true">
+    <div class="spinner" aria-hidden="true"></div>
+    <p id="loadingText">Atualizando…</p>
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <div class="loading hidden" id="loading" role="status" aria-live="polite"><div><span class="spinner" aria-hidden="true"></span><p id="loadingText">Sincronizando…</p></div></div>
 
+  <dialog class="modal" id="deleteModal">
+    <form method="dialog" class="modal-card">
+      <p class="eyebrow">CONFIRMAR EXCLUSÃO</p>
+      <h3>Excluir este registro?</h3>
+      <p id="deleteText">Esta ação altera diretamente a planilha.</p>
+      <div class="modal-actions">
+        <button class="ghost-button" id="deleteCancel" value="cancel" type="button">Cancelar</button>
+        <button class="danger-button" id="deleteConfirm" value="confirm" type="button">Excluir</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="./config.js"></script>
   <script src="./ai-config.js"></script>
   <script type="module" src="./app.js"></script>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </body>
 </html>
