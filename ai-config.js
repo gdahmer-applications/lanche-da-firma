@@ -4,5 +4,5 @@
  * Nunca coloque a chave Gemini neste arquivo.
  */
 window.LANCHES_AI_CONFIG = Object.freeze({
-  appsScriptDeploymentId: ""
+  appsScriptDeploymentId: "AKfycbxCu3b8cuFqfw9x2t9i4kmqRxnAMsQrCL-1akO7ZAozclVlqdeTp6nDec1ePlzRBk0aHg"
 });
