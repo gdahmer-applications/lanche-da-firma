@@ -2,6 +2,7 @@ import {
   askLocal,
   buildDashboard,
   cleanText,
+  dailyHomeMessage,
   isoToBr,
   nextFridayIso,
   normalizeName,
@@ -51,6 +52,9 @@ async function init() {
   bindUi();
   resetParticipantForm();
   setDefaultDates();
+  window.setInterval(() => {
+    if (state.data) renderDailyPhrase();
+  }, 60000);
 
   const wantsDemo = Boolean(config.allowDemo) && new URLSearchParams(location.search).get("demo") === "1";
   if (wantsDemo) {
@@ -292,9 +296,15 @@ function renderAll() {
   renderPersonSelect();
   renderEligible();
   renderPeople();
-  qs("#mainPhrase").textContent = `“${state.data.mainMessage}”`;
+  renderDailyPhrase();
   qs("#syncTime").textContent = `Atualizado ${state.data.generatedAt}`;
   qs("#navBaseCount").textContent = `${state.data.baseStats.total} registros`;
+}
+
+function renderDailyPhrase() {
+  const message = dailyHomeMessage(new Date(), config.timezone || "America/Sao_Paulo", 7);
+  state.data.mainMessage = message;
+  qs("#mainPhrase").textContent = `“${message}”`;
 }
 
 function showPage(pageId) {

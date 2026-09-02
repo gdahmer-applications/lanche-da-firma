@@ -13,7 +13,38 @@ const HOME_MESSAGES = Object.freeze([
   "Sexta é dia de pegar firme… no pedaço de cuca.",
   "O importante é não deixar ninguém seco. Estamos falando do refri.",
   "Pode ser doce ou salgado. O que não pode é chegar de mãos vazias.",
-  "O rodízio é democrático: todo mundo tem sua vez de colocar coisa na mesa."
+  "O rodízio é democrático: todo mundo tem sua vez de colocar coisa na mesa.",
+  "A produtividade aumenta quando a reunião termina antes de o lanche esfriar.",
+  "Quem divide o último pedaço já pode colocar colaboração no currículo.",
+  "Toda planilha fica mais amigável depois de uma cuca.",
+  "Não existe problema grande demais para um café e pequeno demais para um salgadinho.",
+  "Se a sexta parece longe, confira se alguém trouxe bolo na quarta.",
+  "O segredo do trabalho em equipe é saber quem ficou com o último pão de queijo.",
+  "Meta boa é meta batida. Cuca boa é cuca repartida.",
+  "O refri não resolve tudo, mas melhora bastante a reunião que poderia ser um e-mail.",
+  "A pressa é inimiga da perfeição e amiga de quem pegou o primeiro pedaço.",
+  "Quem chega cedo escolhe o lanche; quem chega tarde elogia o guardanapo.",
+  "Uma equipe unida jamais deixa uma bandeja voltar cheia.",
+  "Planejamento é descobrir hoje quem vai esquecer o lanche amanhã.",
+  "A esperança é a última que morre; o salgadinho costuma acabar antes.",
+  "Se não houver consenso, peça dois sabores e registre na ata.",
+  "Toda grande ideia começou com alguém perguntando se ainda tinha café.",
+  "Equilíbrio é alternar entre o doce, o salgado e a culpa.",
+  "Quem compartilha conhecimento merece respeito; quem compartilha cuca merece prioridade.",
+  "O caminho mais curto até o bom humor passa pela mesa do lanche.",
+  "Não deixe para amanhã o petisco que pode ser aberto hoje.",
+  "Dados contam histórias; migalhas contam quem chegou primeiro.",
+  "A união faz a força, e a lista do rodízio distribui a despesa.",
+  "Se o dia apertar, afrouxe a tampa do pote de biscoitos.",
+  "Toda crise é temporária; a fama de quem esqueceu a bebida pode durar mais.",
+  "Liderança é dar o exemplo e deixar o pedaço maior para outra pessoa.",
+  "Não conte os minutos para o intervalo; conte quantos participantes confirmaram.",
+  "O sucesso é coletivo, especialmente quando vem em uma bandeja.",
+  "Reunião sem pauta confunde; reunião sem lanche revolta.",
+  "A melhor previsão para hoje é 100% de chance de alguém perguntar pelo café.",
+  "Gentileza gera gentileza. Cuca gera fila.",
+  "Na dúvida, traga a mais: sobras fazem amigos e evitam auditoria informal.",
+  "O importante não é vencer todos os dias, mas não esquecer quando chegar a sua vez."
 ]);
 
 export function cleanText(value) {
@@ -92,6 +123,33 @@ export function todayIso(timezone = "America/Sao_Paulo", now = new Date()) {
     return acc;
   }, {});
   return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
+export function dailyPhrasePeriod(now = new Date(), timezone = "America/Sao_Paulo", rolloverHour = 7) {
+  const date = now instanceof Date ? now : new Date(now);
+  if (Number.isNaN(date.getTime())) throw new Error("Data inválida para a frase diária.");
+  const hour = Math.min(23, Math.max(0, Number(rolloverHour) || 0));
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    hourCycle: "h23"
+  }).formatToParts(date).reduce((acc, part) => {
+    if (part.type !== "literal") acc[part.type] = part.value;
+    return acc;
+  }, {});
+  const phraseDate = new Date(Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day)));
+  if (Number(parts.hour) < hour) phraseDate.setUTCDate(phraseDate.getUTCDate() - 1);
+  return phraseDate.toISOString().slice(0, 10);
+}
+
+export function dailyHomeMessage(now = new Date(), timezone = "America/Sao_Paulo", rolloverHour = 7) {
+  const period = dailyPhrasePeriod(now, timezone, rolloverHour);
+  const dayNumber = Math.floor(isoDate(period).getTime() / 86400000);
+  const index = ((dayNumber % HOME_MESSAGES.length) + HOME_MESSAGES.length) % HOME_MESSAGES.length;
+  return HOME_MESSAGES[index];
 }
 
 export function daysBetween(fromIso, toIso) {
@@ -342,7 +400,7 @@ export function buildDashboard(rawData, options = {}) {
     app: { title: "Lanche da Firma", timezone, aiEnabled: false, provider: "local", metricsMode: "dynamic-pages-v4" },
     generatedAt,
     referenceIso,
-    mainMessage: HOME_MESSAGES[Math.floor(Math.random() * HOME_MESSAGES.length)],
+    mainMessage: dailyHomeMessage(now, timezone),
     cards: buildCards(participants, recordsByCategory, rankings, referenceIso),
     rankings,
     participants: participants.map(serializeParticipant),

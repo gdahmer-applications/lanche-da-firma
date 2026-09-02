@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 
 import {
   buildDashboard,
+  dailyHomeMessage,
+  dailyPhrasePeriod,
   historyFormulas,
   isoToBr,
   isoToSerial,
@@ -27,6 +29,18 @@ test("converte datas sem depender do fuso do computador", () => {
   assert.equal(parseDateToIso("46241"), "2026-08-07");
   assert.equal(isoToSerial("2026-08-07"), 46241);
   assert.equal(nextFridayIso("2026-09-02"), "2026-09-04");
+});
+
+test("troca a sabedoria diária às 07h no horário de São Paulo", () => {
+  const before = new Date("2026-09-02T09:59:59Z");
+  const atSeven = new Date("2026-09-02T10:00:00Z");
+  const later = new Date("2026-09-02T20:00:00Z");
+  const nextMorning = new Date("2026-09-03T10:00:00Z");
+
+  assert.equal(dailyPhrasePeriod(before), "2026-09-01");
+  assert.equal(dailyPhrasePeriod(atSeven), "2026-09-02");
+  assert.equal(dailyHomeMessage(atSeven), dailyHomeMessage(later));
+  assert.notEqual(dailyHomeMessage(atSeven), dailyHomeMessage(nextMorning));
 });
 
 test("mantém a regra de saldo esperado menos realizado", () => {
