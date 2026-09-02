@@ -77,6 +77,7 @@ jobs:
 
           grep -Fq '<title>Lanche da Firma</title>' /tmp/index.html
           grep -Fq 'https://accounts.google.com/gsi/client' /tmp/index.html
+          grep -Fq 'https://script.googleapis.com' /tmp/index.html
           grep -Eq 'appsScriptDeploymentId: "[A-Za-z0-9_-]{20,}"' /tmp/ai-config.js
           grep -Fq 'allowedDomain: "madesa.com"' /tmp/config.js
           grep -Fq 'allowDemo: false' /tmp/config.js
@@ -90,4 +91,4 @@ jobs:
           node --check /tmp/sheets-api.js
 
           curl -fsSI --max-time 20 https://accounts.google.com/gsi/client >/dev/null
-          echo "Smoke test concluído: GitHub Pages e arquivos públicos da IA estão acessíveis."
+          echo "Smoke test concluído: GitHub Pages, CSP e arquivos públicos da IA estão acessíveis."
