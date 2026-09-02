@@ -58,7 +58,9 @@ export class AppsScriptAiClient {
     if (typeof fetchImpl !== "function") throw new Error("Fetch indisponível para consultar o Apps Script.");
     this.accessToken = accessToken;
     this.deploymentId = String(deploymentId).trim();
-    this.fetchImpl = fetchImpl;
+    // O fetch nativo do navegador exige o contexto global em alguns ambientes.
+    // Encapsular a chamada evita "Illegal invocation" ao armazená-lo na instância.
+    this.fetchImpl = (...args) => Reflect.apply(fetchImpl, globalThis, args);
   }
 
   setAccessToken(accessToken) {
