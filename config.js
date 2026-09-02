@@ -8,7 +8,7 @@
  */
 window.LANCHES_CONFIG = Object.freeze({
   googleClientId: "COLE_AQUI_O_CLIENT_ID.apps.googleusercontent.com",
-  spreadsheetId: "COLE_AQUI_O_ID_DA_PLANILHA",
+  spreadsheetId: "1cYHjXTPWU3bJIKimAcQ_-urK5jBlWORkATEqC6giFsk",
   allowedDomain: "madesa.com",
   timezone: "America/Sao_Paulo",
   appName: "Lanche da Firma",
