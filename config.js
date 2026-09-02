@@ -7,7 +7,7 @@
  * neste arquivo.
  */
 window.LANCHES_CONFIG = Object.freeze({
-  googleClientId: "COLE_AQUI_O_CLIENT_ID.apps.googleusercontent.com",
+  googleClientId: "326856966224-2efvs3rvji0r8ol1req7e12c7eqojhhn.apps.googleusercontent.com",
   spreadsheetId: "1cYHjXTPWU3bJIKimAcQ_-urK5jBlWORkATEqC6giFsk",
   allowedDomain: "madesa.com",
   timezone: "America/Sao_Paulo",
