@@ -1,0 +1,14 @@
+# Dados e credenciais não pertencem ao repositório do GitHub Pages.
+*.xlsx
+*.xls
+*.csv
+*.tsv
+.env
+.env.*
+*.pem
+*.key
+client_secret*.json
+credentials*.json
+token*.json
+node_modules/
+_site/

@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Rodízio interno de cucas, bebidas e lanches da equipe.">
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://accounts.google.com; style-src 'self'; img-src 'self' data: https://lh3.googleusercontent.com https://*.googleusercontent.com; connect-src 'self' https://accounts.google.com https://sheets.googleapis.com https://openidconnect.googleapis.com https://oauth2.googleapis.com; frame-src https://accounts.google.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+  <title>Lanche da Firma</title>
+  <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#mainContent">Ir para o conteúdo</a>
+
+  <section class="gate hidden" id="configGate" aria-labelledby="configTitle">
+    <div class="gate-card">
+      <div class="gate-mark" aria-hidden="true">🥪</div>
+      <p class="eyebrow">CONFIGURAÇÃO NECESSÁRIA</p>
+      <h1 id="configTitle">Lanche da Firma</h1>
+      <p class="gate-copy">Antes da publicação, preencha o Client ID do Google e o ID da planilha no arquivo <code>config.js</code>.</p>
+      <div class="gate-note">Nenhum dado da planilha fica salvo no GitHub Pages.</div>
+    </div>
+  </section>
+
+  <section class="gate hidden" id="authGate" aria-labelledby="authTitle">
+    <div class="gate-card auth-card">
+      <div class="gate-mark" aria-hidden="true">🥪</div>
+      <p class="eyebrow">ACESSO INTERNO</p>
+      <h1 id="authTitle">Lanche da Firma</h1>
+      <p class="gate-copy">Entre com sua conta corporativa para consultar e atualizar o rodízio.</p>
+      <button class="google-button" id="loginButton" type="button" disabled>
+        <span class="google-g" aria-hidden="true">G</span>
+        Entrar com Google
+      </button>
+      <p class="domain-note">Acesso permitido somente para <strong>@madesa.com</strong></p>
+      <div class="auth-status" id="authStatus" role="status" aria-live="polite">Carregando autenticação segura…</div>
+    </div>
+  </section>
+
+  <div class="app-shell hidden" id="appShell">
+    <aside class="sidebar" id="sidebar" aria-label="Navegação principal">
+      <div class="brand-block">
+        <div class="brand-icon" aria-hidden="true">🥪</div>
+        <div>
+          <strong>Lanche da Firma</strong>
+          <span>Rodízio da equipe</span>
+        </div>
+      </div>
+
+      <nav class="nav" aria-label="Seções">
+        <button class="nav-item nav-base" data-page="base" type="button">
+          <span class="nav-icon" aria-hidden="true">▦</span>
+          <span class="nav-label"><strong>BASE</strong><small id="navBaseCount">0 registros</small></span>
+        </button>
+        <div class="nav-divider" aria-hidden="true"></div>
+        <button class="nav-item active" data-page="inicio" type="button"><span class="nav-icon" aria-hidden="true">⌂</span><span>Início</span></button>
+        <button class="nav-item" data-page="rodizio" type="button"><span class="nav-icon" aria-hidden="true">☷</span><span>Rodízio</span></button>
+        <button class="nav-item" data-page="registrar" type="button"><span class="nav-icon" aria-hidden="true">＋</span><span>Registrar</span></button>
+        <button class="nav-item" data-page="pessoas" type="button"><span class="nav-icon" aria-hidden="true">♟</span><span>Pessoas</span></button>
+        <button class="nav-item" data-page="ia" type="button"><span class="nav-icon" aria-hidden="true">✦</span><span>Conselheiro</span></button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="connection-state"><span class="state-dot"></span><span>Planilha conectada</span></div>
+        <div class="user-card">
+          <img id="userPicture" alt="" width="36" height="36">
+          <div><strong id="userName">Usuário</strong><span id="userEmail">—</span></div>
+        </div>
+        <button class="ghost-button full" id="logoutButton" type="button">Sair</button>
+      </div>
+    </aside>
+
+    <button class="sidebar-scrim hidden" id="sidebarScrim" type="button" aria-label="Fechar menu"></button>
+
+    <main class="main" id="mainContent">
+      <header class="topbar">
+        <button class="menu-button" id="menuButton" type="button" aria-label="Abrir menu" aria-expanded="false">☰</button>
+        <div>
+          <p class="top-kicker">ESTABELECIMENTO DE ALTA GASTRONOMIA CORPORATIVA</p>
+          <h1 id="pageTitle">Início</h1>
+        </div>
+        <div class="top-actions">
+          <span class="sync-time" id="syncTime">Aguardando sincronização</span>
+          <button class="ghost-button" id="refreshButton" type="button">↻ Atualizar</button>
+        </div>
+      </header>
+
+      <div class="demo-banner hidden" id="demoBanner">MODO DE DEMONSTRAÇÃO — alterações não são gravadas.</div>
+
+      <section class="page" id="base" aria-labelledby="baseTitle">
+        <div class="section-heading">
+          <div><p class="eyebrow">VISÃO CONSOLIDADA</p><h2 id="baseTitle">Base de lançamentos</h2><p>CUCA, bebida e lanche em uma única lista.</p></div>
+          <button class="primary-button" id="baseAddButton" type="button">＋ Novo registro</button>
+        </div>
+        <div class="metric-row" id="baseKpis"></div>
+        <div class="panel base-panel">
+          <div class="base-toolbar">
+            <label class="search-field"><span class="sr-only">Buscar na base</span><input id="baseSearch" type="search" placeholder="Buscar pessoa, item ou data…" autocomplete="off"></label>
+            <label><span class="sr-only">Categoria</span><select id="baseCategory"><option value="">Todas as categorias</option><option value="CUCA">CUCA</option><option value="BEBIDA">Bebida</option><option value="LANCHE">Lanche</option></select></label>
+            <label><span class="sr-only">Status</span><select id="baseStatus"><option value="">Todos os status</option><option value="REALIZADO">Realizado</option><option value="PROGRAMADO">Programado</option></select></label>
+            <button class="ghost-button" id="baseClear" type="button">Limpar</button>
+          </div>
+          <div class="table-meta"><span id="baseCount">0 registros</span></div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Data</th><th>Tipo</th><th>Responsável</th><th>Item / observação</th><th>Status</th><th>Crédito</th><th>Ações</th></tr></thead>
+              <tbody id="baseRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="page active" id="inicio" aria-labelledby="inicioTitle">
+        <div class="section-heading compact"><div><p class="eyebrow">VISÃO DO DIA</p><h2 id="inicioTitle">Quem está na vez?</h2></div></div>
+        <div class="hero-cards" id="heroCards"></div>
+        <div class="two-columns">
+          <article class="panel"><div class="panel-title"><div><p class="eyebrow">PRÓXIMOS</p><h2>Agendamentos em aberto</h2></div></div><div class="schedule" id="schedule"></div></article>
+          <article class="panel phrase-panel"><p class="eyebrow">SABEDORIA DUVIDOSA DO DIA</p><blockquote id="mainPhrase">Carregando uma frase de gosto questionável…</blockquote><div class="badges" id="badges"></div></article>
+        </div>
+        <article class="panel movements"><div class="panel-title"><div><p class="eyebrow">HISTÓRICO</p><h2>Últimos movimentos</h2></div></div><div class="activity" id="recentActivity"></div></article>
+      </section>
+
+      <section class="page" id="rodizio" aria-labelledby="rodizioTitle">
+        <div class="section-heading compact"><div><p class="eyebrow">PRIORIDADE ATUAL</p><h2 id="rodizioTitle">Placar da rodada</h2><p>Maior saldo e maior tempo sem contribuir aparecem primeiro.</p></div></div>
+        <div class="panel">
+          <div class="tabs" role="tablist" aria-label="Categoria do ranking">
+            <button class="tab active" data-rank="BEBIDA" role="tab" aria-selected="true" type="button">Bebidas</button>
+            <button class="tab" data-rank="LANCHE" role="tab" aria-selected="false" type="button">Lanches</button>
+            <button class="tab" data-rank="CUCA" role="tab" aria-selected="false" type="button">CUCA</button>
+          </div>
+          <div class="ranking" id="rankingList"></div>
+          <div class="info-note">Programado não reduz saldo. Somente registros realizados contam no rodízio.</div>
+        </div>
+      </section>
+
+      <section class="page" id="registrar" aria-labelledby="registrarTitle">
+        <div class="section-heading compact"><div><p class="eyebrow">NOVA MOVIMENTAÇÃO</p><h2 id="registrarTitle">Abrir comanda</h2></div></div>
+        <div class="form-layout">
+          <form class="panel form-panel" id="registerForm">
+            <label>Quem assume a conta?<select name="pessoa" id="personSelect" required></select></label>
+            <div class="field-grid">
+              <label>O quê?<select name="categoria" id="categorySelect"><option value="BEBIDA">Bebida</option><option value="LANCHE">Lanche / amendoim</option><option value="CUCA">CUCA</option></select></label>
+              <label>Quando?<input type="date" name="data" id="dateInput" required></label>
+            </div>
+            <label>Pedido, sabor ou observação<input name="item" id="itemInput" placeholder="Ex.: 2 Coca Zero + gelo" maxlength="250"></label>
+            <fieldset class="radio-grid"><legend>Como registrar?</legend><label><input type="radio" name="acao" value="agendado" checked><span>📌 Programado</span></label><label><input type="radio" name="acao" value="realizado"><span>✓ Realizado</span></label></fieldset>
+            <button class="primary-button full" id="registerButton" type="submit">Salvar registro</button>
+            <div class="form-status" id="formStatus" role="status" aria-live="polite"></div>
+          </form>
+          <aside class="panel side-info"><p class="eyebrow">REGRAS RÁPIDAS</p><h2>Como funciona</h2><ul><li>CUCA deve ser agendada para uma sexta-feira.</li><li>Programado só entra no saldo quando for marcado como realizado.</li><li>O cálculo respeita a data de entrada de cada participante.</li></ul><h3>Participantes elegíveis</h3><div class="badges" id="eligibleBadges"></div></aside>
+        </div>
+      </section>
+
+      <section class="page" id="pessoas" aria-labelledby="pessoasTitle">
+        <div class="section-heading"><div><p class="eyebrow">CONFIGURAÇÃO DO RODÍZIO</p><h2 id="pessoasTitle">Pessoas</h2><p>Defina desde quando cada pessoa participa de cada categoria.</p></div><button class="ghost-button" id="newParticipantButton" type="button">＋ Nova pessoa</button></div>
+        <div class="people-layout">
+          <form class="panel form-panel" id="participantForm">
+            <input type="hidden" id="participantOriginalName">
+            <label>Nome<input id="participantName" required maxlength="100" placeholder="Ex.: Maria"></label>
+            <label>Início geral<input type="date" id="participantGeneralStart" required></label>
+            <div class="participation-grid">
+              <div class="participation-card"><label class="check-line"><input type="checkbox" id="participantCuca" checked><span>🍰 CUCA</span></label><label>Início<input type="date" id="participantCucaStart"></label></div>
+              <div class="participation-card"><label class="check-line"><input type="checkbox" id="participantBeverage" checked><span>🥤 Bebida</span></label><label>Início<input type="date" id="participantBeverageStart"></label></div>
+              <div class="participation-card"><label class="check-line"><input type="checkbox" id="participantSnack" checked><span>🥨 Lanche</span></label><label>Início<input type="date" id="participantSnackStart"></label></div>
+            </div>
+            <label>Observações / regra especial<textarea id="participantNotes" maxlength="500" placeholder="Ex.: participa somente da CUCA"></textarea></label>
+            <button class="primary-button full" id="participantSaveButton" type="submit">Salvar pessoa</button>
+            <div class="form-status" id="participantStatus" role="status" aria-live="polite"></div>
+          </form>
+          <div class="panel"><div class="people-list" id="peopleList"></div></div>
+        </div>
+      </section>
+
+      <section class="page" id="ia" aria-labelledby="iaTitle">
+        <div class="section-heading compact"><div><p class="eyebrow">CONSULTA SOBRE O RODÍZIO</p><h2 id="iaTitle">Conselheiro do Lanche</h2><p>Respostas locais usando somente a base carregada.</p></div><span class="local-pill">MODO LOCAL</span></div>
+        <div class="advisor-layout">
+          <aside class="panel quick-panel"><h3>Perguntas rápidas</h3><div class="quick"><button data-question="Quem deve trazer bebida agora?" type="button">Quem traz bebida?</button><button data-question="Quem deve trazer lanche agora?" type="button">Quem traz lanche?</button><button data-question="Quem está com a próxima CUCA?" type="button">Próxima CUCA</button><button data-question="Quais são os agendamentos?" type="button">Ver agendamentos</button></div><div class="info-note">A versão GitHub Pages não envia chaves de IA ao navegador. Assim, nenhuma credencial fica exposta.</div></aside>
+          <div class="panel chat-panel"><div class="messages" id="messages" aria-live="polite"><div class="message bot">Pergunte sobre ranking, agenda ou a situação de uma pessoa.</div></div><form class="chat-input" id="chatForm"><label class="sr-only" for="question">Pergunta</label><input id="question" autocomplete="off" maxlength="500" placeholder="Ex.: quem está devendo bebida?"><button class="primary-button" id="chatButton" type="submit">Enviar</button></form></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop hidden" id="deleteModal" role="presentation">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="deleteTitle" aria-describedby="deleteModalText">
+      <p class="eyebrow danger-text">AÇÃO PERMANENTE</p>
+      <h2 id="deleteTitle">Remover lançamento?</h2>
+      <p id="deleteModalText">Tem certeza?</p>
+      <div class="modal-actions"><button class="ghost-button" id="deleteCancel" type="button">Cancelar</button><button class="danger-button" id="deleteConfirm" type="button">Sim, remover</button></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div class="loading hidden" id="loading" role="status" aria-live="polite"><div><span class="spinner" aria-hidden="true"></span><p id="loadingText">Sincronizando…</p></div></div>
+
+  <script src="./config.js"></script>
+  <script type="module" src="./app.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</body>
+</html>
