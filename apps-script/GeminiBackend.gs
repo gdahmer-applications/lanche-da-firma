@@ -114,16 +114,19 @@ function pagesGetOrGenerateDailyWisdom_(input) {
     var previous = savedPhrase || pagesCleanText_(input && input.fallback);
     var summary = input && input.summary && typeof input.summary === 'object' ? input.summary : {};
     var systemInstruction = [
-      'Crie uma única frase curta de sabedoria duvidosa para uma equipe de escritório que compartilha lanches.',
-      'Escreva em português do Brasil e entregue somente a frase, sem aspas, título, lista ou explicação.',
-      'Use humor leve e inteligente sobre trabalho, cuca, bebida ou lanche.',
-      'A frase deve ser apropriada para ambiente corporativo, sem atacar, constranger ou citar uma pessoa real.',
+      'Crie uma única frase para a seção SABEDORIA DUVIDOSA DO DIA de uma equipe de escritório que compartilha lanches.',
+      'Escreva em português do Brasil natural e entregue somente a frase, sem aspas, título, lista, emoji ou explicação.',
+      'A frase deve ser breve: idealmente entre 6 e 14 palavras e no máximo uma oração curta.',
+      'Use humor de duplo sentido envolvendo comida ou bebida: recheio, tamanho, molho, calor, crocância, abrir, beber, morder, repetir ou dividir.',
+      'O duplo sentido pode ser adulto e malicioso de forma leve, mas nunca deve atacar, diminuir ou generalizar homens, mulheres ou qualquer grupo.',
+      'Evite vulgaridade explícita, assédio, referência a pessoa real ou conteúdo que não soe natural em PT-BR.',
+      'Priorize frases que funcionem sozinhas e sejam imediatamente compreensíveis por brasileiros.',
       'Não repita a frase anterior.'
     ].join('\n');
     var prompt = 'Data da frase: ' + period +
       '\nFrase anterior: ' + (previous || 'nenhuma') +
       '\nResumo opcional do rodízio: ' + JSON.stringify(summary).slice(0, 100000);
-    var phrase = pagesCallGemini_(systemInstruction, prompt, 0.95, 100);
+    var phrase = pagesCallGemini_(systemInstruction, prompt, 1.0, 60);
     phrase = pagesCleanPhrase_(phrase);
     if (!phrase) throw new Error('O Gemini retornou uma frase vazia.');
 
@@ -229,7 +232,7 @@ function pagesGeminiModel_() {
 function pagesCleanPhrase_(value) {
   return pagesCleanText_(value)
     .replace(/^["'“”‘’`]+|["'“”‘’`]+$/g, '')
-    .slice(0, 280)
+    .slice(0, 160)
     .trim();
 }
 
